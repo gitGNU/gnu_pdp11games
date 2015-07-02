@@ -1,0 +1,547 @@
+#!/usr/bin/python3
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Copyright 2015 Peter Cherepanov
+
+import curses
+import random
+import sys
+import os
+import shutil  # get terminal size.
+
+# Bugs / plans:
+# No display of the bonus for eaten ghosts
+# deal with counting more than 20 lives
+#   for instance, display in roman numerals x10 without subtraction rule
+# What to do with 3-digit bonus? And so on.
+#   what does the game do with such bonuses?
+# pacman animation freezes for one frame when using tunnel
+# Object-orient some more of the code, potentially
+# Move main loop into a procedure
+# Create git repository, add GPL file
+
+# test on different terminals
+# test on Cygwin
+# test on Windows
+#   does not work. no curses on windows
+
+
+mazes = [[
+         "+-----------------------------------------------------------------------------+ ",
+         "! .  .  .  .  .  .  .  .  .  .  .   . ! ! .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "! . +-------+ . +-----------------+ . ! ! . +-----------------+ . +-------+ . ! ",
+         "! @ !       ! . !                 ! . ! ! . !                 ! . !       ! @ ! ",
+         "! . +-------+ . +-----------------+ . +-+ . +-----------------+ . +-------+ . ! ",
+         "! .  .  .  .  .  .  .  .  .  .  .   .  .  .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "! . +-------+ . +-------+ . +---------------------+ . +-------+ . +-------+ . ! ",
+         "! . !       ! . !       ! .  .  .   . ! ! .   .  .  . !       ! . !       ! . ! ",
+         "! . !       ! . !       +---------+ . +-+ . +---------+       ! . +-------+ . ! ",
+         "! . +-------+ . !             !                 !             ! .  .  .  .  . ! ",
+         "! .  .  .  .  . !             !   +--+ + +--+   +-------------+ . +-----------+-",
+         "+-----------+ . +-------------+   !         !                   .               ",
+         "              .                   !         !   +-------------+ . +-----------+-",
+         "+-----------+ . +-------------+   +---------+   !             ! .  .  . +-----! ",
+         "! .  .  .  .  . !             !                 !             ! . +-+ .  .  . ! ",
+         "! . +-------+ . +-------------+   ===========   +-------------+ . ! !-----+ . ! ",
+         "! @  .  . ! ! .  .  .  .  .  .  .   .     .   .  .  .  .  .  .  . ! ! .  .  @ ! ",
+         "!-----+ . +-+ . +-------+ . +---------------------+ . +-------+ . +-+ . +-----! ",
+         "! .  .  .  .  . !       ! . !                     ! . !       ! .  .  .  .  . ! ",
+         "! . +-----------+       ! . +---------! !---------+ . !       +-----------+ . ! ",
+         "! . !                   ! .  .  .   . ! ! .   .  .  . !                   ! . ! ",
+         "! . +-----------------------------+ . +-+ . +-----------------------------+ . ! ",
+         "! .  .  .  .  .  .  .  .  .  .  .   .  .  .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "+-----------------------------------------------------------------------------+ "],
+        [
+         "+-----------------------------------------------------------------------------+ ",
+         "! .  .  .  .  .  .  .  .  .  .  .   .  .  .   .  .  . ! ! .  .  .  .  .  .  . ! ",
+         "! . +-+ . +-----------------------+ . +-+ . +-----+ . +-+ . +-+ . +-------+ . ! ",
+         "! . ! ! . !                       ! .  .  . !     ! .  .  . ! ! . !       ! . ! ",
+         "! . +-+ . +-----------------+     +---------+     +--+ . +--+ ! . +-------+ . ! ",
+         "! @  .  .  .  .  .  .  .  . !                        ! . !    ! .  .  .  .  . ! ",
+         "! . +-+ . +-------------+ . +---------+ +------------+ . +--+ !-----+ . +-+ . ! ",
+         "! . ! ! .  .  .  .  . ! ! .  .  .   . ! ! .   .  .  .  .  . ! ! .  .  . ! ! . ! ",
+         "! . ! +-----------+ . ! +---------+ . +-+ . +-----------+ . ! ! . +-------+ . ! ",
+         "! . +-------------+ . !       !                 !       ! . ! ! @  .  .  .  . ! ",
+         "! .  .  .  .  .  .  . !       !   +--+ + +--+   +-------+ . +-------------+ . +-",
+         "+-----------------+ . +-------+   !         !             .                     ",
+         "                    .             !         !   +-------+ . +-----------------+-",
+         "+ . +-------------+ . +-------+   +---------+   !       ! .  .  .  .  .  .  . ! ",
+         "! .  .  .  .  @ ! ! . !       !                 !       ! . +-------------+ . ! ",
+         "! . +-------+ . ! ! . +-------+   ===========   +-----+ ! . +-----------+ ! . ! ",
+         "! . ! ! .  .  . ! ! .  .  .  .  .   .     .   .  .  . ! ! .  .  .  .  . ! ! . ! ",
+         "! . +-+ . +-----! +--+ . +------------------------+ . +-------------+ . +-+ . ! ",
+         "! .  .  .  .  . !    ! . !                        ! .  .  .  .  .  .  .  .  @ ! ",
+         "! . +-------+ . ! +--+ . +--+     +---------+     +-----------------+ . +-+ . ! ",
+         "! . !       ! . ! ! .  .  . !     ! .  .  . !                       ! . ! ! . ! ",
+         "! . +-------+ . +-+ . +-+ . +-----+ . +-+ . +-----------------------+ . +-+ . ! ",
+         "! .  .  .  .  .  .  . ! ! .  .  .   .  .  .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "+-----------------------------------------------------------------------------+ "],
+        [
+         "+-----------------------------------------------------------------------------+ ",
+         "! .  .  .  .  .  .  .  .  .  .  .   . ! ! .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "! . +-+ . +-+ . +-----------------+ . ! ! . +-----+ . +-------+ . +-------+ . ! ",
+         "! @ ! ! . ! ! . !                 ! . ! ! . !     ! . !       ! . !       ! @ ! ",
+         "! . +-+ . +-+ . +-----------------+ . +-+ . +-----+ . +-------+ . +-------+ . ! ",
+         "! .  .  .  .  .  .  .  .  .  .  .   .  .  .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "! . +-------+ . +---------------------------------+ . +---+ . +-----------+ . ! ",
+         "! .  .  .  .  . ! .  .  . .  .  .   . ! ! .   .  .  . !   ! . ! .  .  . . ! . ! ",
+         "! . +-------+ . ! . +-------------+ . +-+ . +---------+---+ . ! . +---+ . + . ! ",
+         "! . +-------+ . ! . ! . . . . !                  .  .  .  . . ! .  .  .  .  . ! ",
+         "! .  .  .  .  . ! .   . +-+ . !   +--+ + +--+   +-------------+ . +-----------+-",
+         "+-----------+ . +-------+-+ . !   !         !                   .               ",
+         "                            . !   !         !   +-------+-+ . + . +-----------+-",
+         "+-------+   +-------------+ . !   +---------+   ! . . . +-+ . ! .  .  . +-----! ",
+         "! .  .  .  .  . !   .  .  . . !                 ! . + .   . . ! . +-+ .  .  . ! ",
+         "! . +-------+ . +-------------+   ===========   + . +---------+ . ! !-----+ . ! ",
+         "! @  .  . ! ! .  .  .  .  .  .  .   .     .   .  .  .  .  .  .  . ! ! .  .  @ ! ",
+         "!-----+ . +-+ . +-------+ . +---------------------+ . +---+ . +---+-+ . +-----! ",
+         "! .  .  .  .  . !       ! . !                     ! . !   ! . ! .  .  .  .  . ! ",
+         "! . +-------+ . +-------+ . +---------! !---------+ . !   ! . +-----------+ . ! ",
+         "! . !       ! .  .  .  .  .  .  .   . ! ! .   .  .  . !   ! .   .  .  .  .  . ! ",
+         "! . +-------+ . +-----------------+ . +-+ . +-------------+---------------+ . ! ",
+         "! .  .  .  .  .  .  .  .  .  .  .   .  .  .   .  .  .  .  .  .  .  .  .  .  . ! ",
+         "+-----------------------------------------------------------------------------+ "]]
+
+
+class Pacman:
+
+    def __init__(self, x, y, gdir, timer):
+        self.x = x
+        self.y = y
+        self.gdir = gdir
+        self.timer = timer
+        self.alive = True
+
+    def pic(self):
+        global t
+        return ("<0>", ">0<")[(self.x + self.y) % 2] if self.alive else ("+0+" if t % 2 == 0 else "$+$")
+
+    def touching(self, x, y):
+        return (self.x == x or self.x == x + 1 or self.x == x - 1) and self.y == y
+
+    def lookdown(self):
+        global maze
+        return maze[self.y][self.x - 1:self.x + 2]
+
+    def draw(self):
+        global a
+        p = self.pic()
+        if self.x == 79:
+            a.addstr(self.y, 78, p[:2])
+            a.addstr(self.y + 1, 0, p[2:])
+        elif self.x == 0:
+            a.addstr(self.y, 0, p[1:])
+            a.addstr(self.y - 1, 79, p[:1])
+        else:
+            a.addstr(self.y, self.x - 1, p)
+
+
+class Ghost(Pacman):
+
+    def pic(self):
+        return "---" if not self.alive else "=0=" if self.timer == 0 else "<->"
+
+    def step(self):
+        gposs = []
+        global maze, walls, combo, pac
+        if self.x == 39 and self.y == 10:
+            self.alive = True
+            self.timer = 0
+        if (maze[self.y + 1][self.x] not in walls and maze[self.y + 1][self.x - 1] not in walls and maze[self.y + 1][self.x + 1] not in walls and self.gdir != 1) or (maze[self.y + 1][self.x] == "+" and maze[self.y + 1][self.x + 1] == " " and maze[self.y + 1][self.x - 1] == " " and self.timer < 0):
+            gposs.append(0)
+        if (maze[self.y - 1][self.x] not in walls and maze[self.y - 1][self.x - 1] not in walls and maze[self.y - 1][self.x + 1] not in walls and self.gdir != 0) or (maze[self.y - 1][self.x] == "+" and maze[self.y - 1][self.x + 1] == " " and maze[self.y - 1][self.x - 1] == " "):
+            gposs.append(1)
+        if self.x >= 2 and (self.gdir != 3 and maze[self.y][self.x - 2] not in walls):
+            gposs.append(2)
+        if self.x <= 77 and (self.gdir != 2 and maze[self.y][self.x + 2] not in walls):
+            gposs.append(3)
+        if len(gposs) > 0:
+            self.gdir = wrand(
+                gposs, self.x, self.y, 2 if not self.alive else 0 if self.timer == 0 else 1)
+        if self.x == 79 and self.gdir == 3:
+            self.x = -1
+            self.y = 12
+        if self.x == 0 and self.gdir == 2:
+            self.x = 80
+            self.y = 11
+        self.x += (0, 0, -1, 1)[self.gdir]
+        self.y += (1, -1, 0, 0)[self.gdir]
+        if self.timer > 0:
+            self.timer -= 1
+            if self.timer == 0:
+                self.gdir = -1
+        else:
+            combo = 0
+
+    def ghosttouch(self, target):
+        global score, combo
+        if (self.x == target.x or self.x == target.x + 1 or self.x == target.x - 1) and self.y == target.y and self.alive:
+            if self.timer > 0:
+                self.alive = False
+                combo += 20
+                score += combo
+            else:
+                target.alive = False
+
+
+def wrand(a, x, y, state):
+    global pac
+    if state == 0:
+        if x > 33 and x < 45 and y > 9 and y < 14:
+            if random.randint(0, 1) == 0:
+                return random.choice(a)
+            elif y > 9 and 1 in a:
+                return 1
+            elif x > 39 and 2 in a:
+                return 2
+            elif x < 39 and 3 in a:
+                return 3
+            else:
+                return random.choice(a)
+        else:
+            if random.randint(0, 4) == 0:
+                return random.choice(a)
+            elif pac.y > y and 0 in a:
+                return 0
+            elif pac.y < y and 1 in a:
+                return 1
+            elif pac.x < x and 2 in a:
+                return 2
+            elif pac.x > x and 3 in a:
+                return 3
+            else:
+                return random.choice(a)
+    elif state == 1:
+        if random.randint(0, 4) == 0:
+            return random.choice(a)
+        elif pac.y < y and 0 in a:
+            return 0
+        elif pac.y > y and 1 in a:
+            return 1
+        elif pac.x > x and 2 in a:
+            return 2
+        elif pac.x < x and 3 in a:
+            return 3
+        else:
+            return random.choice(a)
+    elif state == 2:
+        if random.randint(0, 4) == 0:
+            return random.choice(a)
+        elif y < 10 and 0 in a:
+            return 0
+        elif y > 10 and 1 in a:
+            return 1
+        elif x > 39 and 2 in a:
+            return 2
+        elif x < 39 and 3 in a:
+            return 3
+        elif y == 9 and x == 39:
+            return 0
+        else:
+            return random.choice(a)
+
+
+def reset():
+    global pac, q, g1, g2, g3, g4, stillalive
+    pac = Pacman(39, 16, 0, 0)
+    g1 = Ghost(38, 11, 0, 0)
+    g2 = Ghost(40, 11, 1, 0)
+    g3 = Ghost(39, 11, 2, 0)
+    g4 = Ghost(39, 12, 3, 0)
+    q = None
+    stillalive = True
+
+
+def pac_hall(score):
+    global a
+    scorein = open(os.path.expanduser("~/.sp21.txt"), 'r+')
+    scorelist = scorein.readlines()[:20]
+    minval = min(map(lambda x: int(x.split(" ", 1)[0]), scorelist))
+    winning = (len(scorelist) < 20 and score != -1) or score > minval
+    if winning:
+        scorelist.append(str(score) + " ")
+        scorelist = sorted(
+            scorelist, reverse=True, key=lambda x: int(x.split()[0]))
+
+    a.addstr("      PAC-HALL\n--------------------\n")
+    for i in range(len(scorelist)):
+        j = scorelist[i].split(" ", 1)
+        a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + j[1])[:20])
+        a.addstr(i + 2, 20 - len(j[0]), j[0])
+    a.addstr(min(len(scorelist), 20) + 2, 0, "NN *********")
+    a.addstr(min(len(scorelist), 20) + 2, 19, scorelist[-1].split()[
+             0] if score > minval else str(score if score != -1 else 0))
+    if winning:
+        i = len(scorelist) - 1
+        while score > int(scorelist[i].split()[0]):
+            i -= 1
+        a.nodelay(0)
+        curses.curs_set(1)
+        a.keypad(1)
+        name = []
+        char = ""
+        while char != 10:
+            a.addstr(11, 40, "ENTER YOUR NAME")
+            a.addstr(i + 2, 0, " " * (s[1] - 1))
+            a.addstr(i + 2, 20 - len(str(score)), str(score))
+            a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + "".join(name)))
+            a.refresh()
+            char = a.getch()
+            if char == 263 and name != []:
+                name.pop()
+            elif char <= 255:
+                name.append(chr(char))
+        scorelist[i] = str(score) + " " + "".join(name)
+        scorein.seek(0)
+        for i in scorelist[:20]:
+            scorein.write(i)
+        a.addstr(11, 40, "               ")
+    a.addstr(11, 40, "BEGIN ?" if score == -1 else "ONCE MORE ?")
+    scorein.close()
+    while True:
+        ch = a.getch()
+        if ch == 121 or ch == 10:
+            return True
+        if ch == 110:
+            return False
+
+try:
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print("""Usage: sp21 [-OPTIONS]
+A port of the Pacman game for the PDP-11/RT-11.
+
+  -h, --help     Display this help page.
+  -v, --version  Print the current version of the program.
+      --debug    Enable the debug timescale and single-step features.
+                 + and - double and halve the time step length, and
+                 0 toggles single-step mode.""")
+        sys.exit(0)
+    elif "--version" in sys.argv or "-v" in sys.argv:
+        print("sp21 0.9")
+        sys.exit(0)
+    debug = "--debug" in sys.argv
+    timestep = 20
+    onestep = False
+    s = shutil.get_terminal_size()
+    a = curses.initscr()
+    curses.noecho()
+    curses.curs_set(1)
+    if not pac_hall(-1):
+        curses.endwin()
+        sys.exit(0)
+    while True:
+        t = 0
+        level = -1
+        dcount = 0
+        maze = [i for i in mazes[level]]
+        lives = 3
+        score = 0
+        lastscore = 0
+        combo = 0
+        bpower = 15
+        bonus = False
+        btime = -1
+        tunnelpos = 0
+        stillalive = True
+        walls = "+!-="
+        curses.curs_set(0)
+        curses.noecho()
+        a.keypad(1)
+        a.nodelay(1)
+        pac = Pacman(39, 16, 0, 0)
+        g1 = Ghost(39, 11, 0, 0)
+        g2 = Ghost(39, 11, 1, 0)
+        g3 = Ghost(39, 11, 2, 0)
+        g4 = Ghost(39, 11, 3, 0)
+        dots = 0
+        q = None
+        while True:
+            s = shutil.get_terminal_size()
+            if s[0] < 80 or s[1] < 24:
+                while s[0] < 80 or s[1] < 24:
+                    a.erase()
+                    a.addstr(
+                        0, 0, "Your screen is too small for this program"[:s[0]])
+                    if s[1] > 2:
+                        a.addstr(1, 0, "80x24 is the minimum screen size required"[
+                                 :s[0]])  # this breaks with ludicrously small terminal sizes
+                    a.refresh()
+                    curses.napms(100)
+                    s = shutil.get_terminal_size()
+                else:
+                    curses.endwin()
+                    a = curses.initscr()
+
+            while True:
+                n = a.getch()
+                if n == -1:
+                    break
+                if debug:
+                    if n == 61:
+                        timestep *= 2
+                    if n == 45:
+                        timestep //= 2
+                    if n == 48:
+                        onestep = not onestep
+                if n in [258, 259, 260, 261]:
+                    if n - 258 == 0 and (maze[pac.y + 1][pac.x] in walls or maze[pac.y + 1][pac.x - 1] in walls or maze[pac.y + 1][pac.x + 1] in walls):
+                        q = 0
+                    elif n - 258 == 1 and (maze[pac.y - 1][pac.x] in walls or maze[pac.y - 1][pac.x - 1] in walls or maze[pac.y - 1][pac.x + 1] in walls):
+                        q = 1
+                    elif n - 258 == 2 and (pac.x < 2 or maze[pac.y][pac.x - 2] in walls):
+                        q = 2
+                    elif n - 258 == 3 and (pac.x > 77 or maze[pac.y][pac.x + 2] in walls):
+                        q = 3
+                    else:
+                        pac.gdir = n - 258
+
+            t += 1
+
+            if dots >= dcount:
+                dots = 0
+                level += 1
+                maze = [i for i in mazes[level % 3]]
+                reset()
+                dcount = 0
+                for i, m in enumerate(maze):
+                    a.addstr(i, 0, m)
+                    a.refresh()
+                    dcount += m.count('.')
+                    curses.napms(83)  # = 80 * 1000 / 960
+
+            a.erase()
+            for i in range(len(maze)):
+                a.addstr(i, 0, maze[i])
+            if score > 0:
+                a.addstr(18, 42 - len(str(score)), str(score))
+            if score - lastscore >= 500:
+                lives += 1
+                lastscore = score // 500 * 500
+            for i in range(lives - 1):
+                a.addstr(i, 79, "X")
+
+            if t % 4 == 0:
+                g1.step()
+                g2.step()
+                g3.step()
+                g4.step()
+            g1.ghosttouch(pac)
+            g2.ghosttouch(pac)
+            g3.ghosttouch(pac)
+            g4.ghosttouch(pac)
+
+            if not pac.alive:
+                lives -= 1
+                for i in range(15):
+                    pac.draw()
+                    a.refresh()
+                    t += 1
+                    curses.napms(100)
+                if lives <= 0:
+                    break
+                reset()
+            if bonus:
+                a.addstr(14, 38, str(bpower)[0] + "*" + str(bpower)[1])
+                if btime == 0:
+                    bonus = False
+                    bpower = 15
+                else:
+                    btime -= 1
+            elif random.randint(1, 2000) == 1:
+                bonus = True
+                btime = 400
+            if bonus and pac.touching(39, 14):
+                score += bpower
+                bpower += 15
+                btime = -1
+                bonus = False
+            if "." in pac.lookdown():
+                maze[pac.y] = maze[pac.y][
+                    :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
+                dots += 1
+                score += 1
+            if "@" in pac.lookdown():
+                maze[pac.y] = maze[pac.y][
+                    :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
+                g1.timer = 110
+                g2.timer = 110
+                g3.timer = 110
+                g4.timer = 110
+                pac.timer = 110
+                g1.gdir = -1
+                g2.gdir = -1
+                g3.gdir = -1
+                g4.gdir = -1
+                combo = 0
+                score += 5
+
+            pac.draw()
+            g1.draw()
+            g2.draw()
+            g3.draw()
+            g4.draw()
+
+            if (t % 3 == 0) if pac.timer > 0 else (t % 4 == 0):
+                if (pac.gdir == 0 and q == 1) or (pac.gdir == 1 and q == 0) or (pac.gdir == 2 and q == 3) or (pac.gdir == 3 and q == 2):
+                    q = None
+                elif q == 0 and maze[pac.y + 1][pac.x] not in walls and maze[pac.y + 1][pac.x - 1] not in walls and maze[pac.y + 1][pac.x + 1] not in walls:
+                    pac.gdir = 0
+                    q = None
+                elif q == 1 and maze[pac.y - 1][pac.x] not in walls and maze[pac.y - 1][pac.x - 1] not in walls and maze[pac.y - 1][pac.x + 1] not in walls:
+                    pac.gdir = 1
+                    q = None
+                elif q == 2 and maze[pac.y][pac.x - 2] not in walls:
+                    pac.gdir = 2
+                    q = None
+                elif q == 3 and maze[pac.y][pac.x + 2] not in walls:
+
+                    pac.gdir = 3
+                    q = None
+
+                if pac.x == 79 and pac.gdir == 3:
+                    pac.x = -1
+                    pac.y = 12
+                if pac.x == 0 and pac.gdir == 2:
+                    pac.x = 80
+                    pac.y = 11
+
+                if pac.gdir == 0 and maze[pac.y + 1][pac.x] not in walls and maze[pac.y + 1][pac.x - 1] not in walls and maze[pac.y + 1][pac.x + 1] not in walls:
+                    pac.y += 1
+                elif pac.gdir == 1 and maze[pac.y - 1][pac.x] not in walls and maze[pac.y - 1][pac.x - 1] not in walls and maze[pac.y - 1][pac.x + 1] not in walls:
+                    pac.y -= 1
+                elif pac.gdir == 2 and (pac.x < 2 or maze[pac.y][pac.x - 2] not in walls):
+                    pac.x -= 1
+                elif pac.gdir == 3 and (pac.x > 77 or maze[pac.y][pac.x + 2] not in walls):
+                    pac.x += 1
+
+                if pac.timer > 0 and t % 4 == 0:
+                    pac.timer -= 1
+            if debug:
+                a.addstr(25, 0, str((pac.x, pac.y)))
+
+            a.refresh()
+            if onestep:
+                a.nodelay(0)
+                char = a.getch()
+                if char == 48:
+                    onestep = False
+                a.nodelay(1)
+            curses.napms(timestep)
+        a.erase()
+        if not pac_hall(score):
+            curses.endwin()
+            sys.exit(0)
+except KeyboardInterrupt:
+    curses.endwin()
