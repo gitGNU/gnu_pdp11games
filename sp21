@@ -266,9 +266,9 @@ def reset():
 
 def pac_hall(score):
     global a
-    scorein = open(os.path.expanduser("~/.sp21.txt"), 'r+')
+    scorein = os.fdopen(os.open(os.path.expanduser("~/.sp21.txt"), os.O_RDWR | os.O_CREAT), "r+")
     scorelist = scorein.readlines()[:20]
-    minval = min(map(lambda x: int(x.split(" ", 1)[0]), scorelist))
+    minval = min(map(lambda x: int(x.split(" ", 1)[0]), scorelist)) if len(scorelist) else 0
     winning = (len(scorelist) < 20 and score != -1) or score > minval
     if winning:
         scorelist.append(str(score) + " ")
