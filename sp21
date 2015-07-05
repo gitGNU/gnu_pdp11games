@@ -31,6 +31,10 @@ import shutil  # get terminal size.
 # Object-orient some more of the code, potentially
 # Move main loop into a procedure
 # Create git repository, add GPL file
+# height 24 crashes
+# checking 127 for backspace is required for cygwin compatibility. this might break something though 
+# add wasd support
+# on terminals where cursor visibility cannot be set, the cursor follows ghost 4. write empty string to reset it somewhere less distracting
 
 # test on different terminals
 # test on Cygwin
@@ -280,7 +284,7 @@ def pac_hall(score):
         j = scorelist[i].split(" ", 1)
         a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + j[1])[:20])
         a.addstr(i + 2, 20 - len(j[0]), j[0])
-    a.addstr(min(len(scorelist), 20) + 2, 0, "NN *********")
+    a.addstr(min(len(scorelist), 20) + 2, 0, "NN *********        ")
     a.addstr(min(len(scorelist), 20) + 2, 19, scorelist[-1].split()[
              0] if score > minval else str(score if score != -1 else 0))
     if winning:
@@ -288,7 +292,10 @@ def pac_hall(score):
         while score > int(scorelist[i].split()[0]):
             i -= 1
         a.nodelay(0)
-        curses.curs_set(1)
+        try:
+            curses.curs_set(1)
+        except:
+            pass
         a.keypad(1)
         name = []
         char = ""
@@ -299,7 +306,7 @@ def pac_hall(score):
             a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + "".join(name)))
             a.refresh()
             char = a.getch()
-            if char == 263 and name != []:
+            if (char == 263 or char == 127) and name != []:
                 name.pop()
             elif char <= 255:
                 name.append(chr(char))
@@ -337,7 +344,10 @@ A port of the Pacman game for the PDP-11/RT-11.
     s = shutil.get_terminal_size()
     a = curses.initscr()
     curses.noecho()
-    curses.curs_set(1)
+    try:
+        curses.curs_set(1)
+    except:
+        pass
     if not pac_hall(-1):
         curses.endwin()
         sys.exit(0)
@@ -356,7 +366,10 @@ A port of the Pacman game for the PDP-11/RT-11.
         tunnelpos = 0
         stillalive = True
         walls = "+!-="
-        curses.curs_set(0)
+        try:
+            curses.curs_set(0)
+        except:
+            pass
         curses.noecho()
         a.keypad(1)
         a.nodelay(1)
