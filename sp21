@@ -33,6 +33,7 @@ import shutil  # get terminal size.
 # checking 127 for backspace is required for cygwin compatibility. this might break something though 
 # add wasd support
 # add more comments
+# the ghost/pacman graphics are currently a hybrid of the original and the russian version
 
 # test on different terminals
 # test on real terminals
@@ -130,7 +131,7 @@ class Pacman:
     def pic(self):
         global t
         # the on-death script changes t every ghost munching frame 
-        return ("<0>", ">0<")[(self.x + self.y) % 2] if self.alive else ("+0+" if t % 2 == 0 else "$+$") 
+        return ("<$>", ">$<")[(self.x + self.y) % 2] if self.alive else ("+$+" if t % 2 == 0 else "$+$") 
 
     def touching(self, x, y):
         return (self.x == x or self.x == x + 1 or self.x == x - 1) and self.y == y
@@ -284,8 +285,8 @@ def pac_hall(score):
         a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + j[1])[:20])
         a.addstr(i + 2, 20 - len(j[0]), j[0])
     a.addstr(min(len(scorelist), 20) + 2, 0, "NN *********        ")
-    a.addstr(min(len(scorelist), 20) + 2, 19, scorelist[-1].split()[
-             0] if score > minval else str(score if score != -1 else 0))
+    pscore = scorelist[-1].split()[0] if score > minval else str(score if score != -1 else 0)
+    a.addstr(min(len(scorelist), 20) + 2, 20-len(pscore), pscore)
     if winning:
         i = len(scorelist) - 1
         while score > int(scorelist[i].split()[0]):
