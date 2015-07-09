@@ -23,10 +23,7 @@ import shutil  # get terminal size.
 
 # Bugs / plans:
 # No display of the bonus for eaten ghosts
-# deal with counting more than 20 lives
-#   for instance, display in roman numerals x10 without subtraction rule
-# What to do with 3-digit bonus? And so on.
-#   what does the game do with such bonuses?
+# How does the original game diaplay 3-digit bonuses?
 # pacman animation freezes for one frame when using tunnel
 # Object-orient some more of the code, potentially
 # Move main loop into a procedure
@@ -35,7 +32,7 @@ import shutil  # get terminal size.
 # add more comments
 # the ghost/pacman graphics are currently a hybrid of the original and the russian version
 
-# test on different terminals
+# test on different terminals: tested on xterm, cygwin
 # test on real terminals
 # test on Windows
 #   does not work. no curses on windows
@@ -267,6 +264,27 @@ def reset():
     g4 = Ghost(39, 12, 3, 0)
     q = None
 
+def show_lives(x):
+    # in Roman numerals x10 without subtraction rule
+    line = 0
+    while(x):
+        if x >= 100:
+            c = "M"
+            x -= 100
+        elif x >= 50:
+            c = "D"
+            x -= 50
+        elif x >= 10:
+            c = "C"
+            x -= 10
+        elif x >= 5:
+            c = "L"
+            x -= 5
+        else:
+            c = "X"
+            x -= 1
+        a.addstr(line, 79, c)
+        line += 1 if line != 9 else 4
 
 def pac_hall(score):
     global a
@@ -337,7 +355,7 @@ A port of the Pacman game for the PDP-11/RT-11.
                  0 toggles single-step mode.""")
         sys.exit(0)
     elif "--version" in sys.argv or "-v" in sys.argv:
-        print("sp21 0.95")
+        print("sp21 1.0")
         sys.exit(0)
     debug = "--debug" in sys.argv
     timestep = 20
@@ -443,8 +461,7 @@ A port of the Pacman game for the PDP-11/RT-11.
             if score - lastscore >= 500:
                 lives += 1
                 lastscore = score // 500 * 500
-            for i in range(lives - 1):
-                a.addstr(i, 79, "X")
+            show_lives(lives - 1)
 
             if t % 4 == 0:
                 g1.step()
@@ -467,7 +484,7 @@ A port of the Pacman game for the PDP-11/RT-11.
                     break
                 reset()
             if bonus:
-                a.addstr(14, 38, str(bpower)[0] + "*" + str(bpower)[1])
+                a.addstr(14, 38, str(bpower)[0] + "*" + str(bpower)[1] if bpower < 100 else str(bpower))
                 if btime == 0:
                     bonus = False
                     bpower = 15
