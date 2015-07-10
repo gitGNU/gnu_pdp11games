@@ -336,11 +336,14 @@ def pac_hall(score):
 # ENTER YOUR NAME is longer than ONCE MORE ? so the above erases the former to make space for the latter
     a.addstr(11, 40, "BEGIN ?" if score == -1 else "ONCE MORE ?")
     scorein.close()
+    a.nodelay(0)
     while True:
         ch = a.getch()
         if ch == 121 or ch == 10:  # if you pressed y or enter:
+            a.nodelay(1)
             return True
         if ch == 110:  # if you pressed n:
+            a.nodelay(1)
             return False
 
 try:  # the entire program is in a try except statement to handle keyboard interrupts by closing curses
