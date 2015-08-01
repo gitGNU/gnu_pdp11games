@@ -28,7 +28,6 @@ import shutil  # get terminal size.
 # Object-orient some more of the code, potentially
 # Move main loop into a procedure
 # checking 127 for backspace is required for cygwin compatibility. this might break something though 
-# add wasd support
 # add more comments
 # the ghost/pacman graphics are currently a hybrid of the original and the russian version
 
@@ -430,6 +429,17 @@ A port of the Pacman game for the PDP-11/RT-11.
                         timestep //= 2
                     if n == 48:  # if n is 0:
                         onestep = not onestep
+
+                # wasd --> arrows
+                if n == 119:   # w
+                    n = 259
+                elif n == 97:  # a
+                    n = 260
+                elif n == 115: # s
+                    n = 258
+                elif n == 100: # d
+                    n = 261
+
                 if n in [258, 259, 260, 261]:  # if n is an arrow key
                     if n - 258 == 0 and (maze[pac.y + 1][pac.x] in walls or maze[pac.y + 1][pac.x - 1] in walls or maze[pac.y + 1][pac.x + 1] in walls):
                         q = 0  # if you cannot move in that direction, queue that movement
