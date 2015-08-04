@@ -287,7 +287,7 @@ def show_lives(x):
 
 def pac_hall(score):
     global a
-    scorein = os.fdopen(os.open(os.path.expanduser("~/.sp21.txt"), os.O_RDWR | os.O_CREAT), "r+")  # if there is no file, make one
+    scorein = os.fdopen(os.open(os.path.expanduser("~/.sp21.txt"), os.O_RDWR | os.O_CREAT, mode=0o640), "r+")  # if there is no file, make one
     scorelist = scorein.readlines()[:20]  # scoreboard only shows top 20. may as well be efficient
     minval = min(map(lambda x: int(x.split(" ", 1)[0]), scorelist)) if len(scorelist) else 0  # handle empty scoreboard
     winning = (len(scorelist) < 20 and score != -1) or score > minval
