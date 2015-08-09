@@ -569,12 +569,12 @@ A port of the Pacman game for the PDP-11/RT-11.
                 elif pac.gdir == 3 and (pac.x > 77 or maze[pac.y][pac.x + 2] not in walls):
                     pac.x += 1
 
-                if pac.timer > 0 and t % 4 == 0:
-                    pac.timer -= 1
+            if pac.timer > 0 and t % 4 == 0:
+                pac.timer -= 1
 
             if debug:
                 a.addstr(25, 0, str((pac.x, pac.y)))  # i am not good with coordinates
-
+            #a.addstr(25,0,str(pac.timer))
             a.addstr(23,79,"")  # put the cursor in the corner, just in case curs_set failed
             a.refresh()
 
