@@ -31,10 +31,9 @@ import shutil  # get terminal size.
 # add more comments
 # the ghost/pacman graphics are currently a hybrid of the original and the russian version
 
-# test on different terminals: tested on xterm, cygwin
+# test on different terminals -- works on xterm, cygwin, screen
 # test on real terminals
-# test on Windows
-#   does not work. no curses on windows
+# test on Windows -- does not work; no curses on Windows
 
 
 mazes = [[
@@ -318,9 +317,9 @@ def pac_hall(score):
         char = ""
         while char != 10: # while you haven't pressed enter:
             a.addstr(11, 40, "ENTER YOUR NAME")
-            a.addstr(i + 2, 0, " " * (s[1] - 1))
+            a.addstr(i + 2, 0, " " * 18)
             a.addstr(i + 2, 20 - len(str(score)), str(score))
-            a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + "".join(name)))
+            a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + "".join(name)[:17]))
             a.refresh()
             char = a.getch()
             if (char == 263 or char == 127) and name != []:  # if backspace: (127 is for cygwin compatibility)
@@ -445,9 +444,9 @@ A port of the Pacman game for the PDP-11/RT-11.
                         q = 0  # if you cannot move in that direction, queue that movement
                     elif n - 258 == 1 and (maze[pac.y - 1][pac.x] in walls or maze[pac.y - 1][pac.x - 1] in walls or maze[pac.y - 1][pac.x + 1] in walls):
                         q = 1
-                    elif n - 258 == 2 and (pac.x < 2 or maze[pac.y][pac.x - 2] in walls):
+                    elif n - 258 == 2 and (pac.x >= 2 and maze[pac.y][pac.x - 2] in walls):
                         q = 2
-                    elif n - 258 == 3 and (pac.x > 77 or maze[pac.y][pac.x + 2] in walls):
+                    elif n - 258 == 3 and (pac.x <= 77 and maze[pac.y][pac.x + 2] in walls):
                         q = 3
                     else:
                         pac.gdir = n - 258  # but if you can, feel free to move in that direction
@@ -574,7 +573,7 @@ A port of the Pacman game for the PDP-11/RT-11.
 
             if debug:
                 a.addstr(25, 0, str((pac.x, pac.y)))  # i am not good with coordinates
-            #a.addstr(25,0,str(pac.timer))
+                a.addstr(26,0,str(q))
             a.addstr(23,79,"")  # put the cursor in the corner, just in case curs_set failed
             a.refresh()
 
