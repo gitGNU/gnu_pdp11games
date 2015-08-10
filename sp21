@@ -26,7 +26,6 @@ import shutil  # get terminal size.
 # How does the original game diaplay 3-digit bonuses?
 # pacman animation freezes for one frame when using tunnel
 # Object-orient some more of the code, potentially
-# Move main loop into a procedure
 # checking 127 for backspace is required for cygwin compatibility. this might break something though 
 # add more comments
 # the ghost/pacman graphics are currently a hybrid of the original and the russian version
@@ -344,7 +343,8 @@ def pac_hall(score):
             a.nodelay(1)
             return False
 
-try:  # the entire program is in a try except statement to handle keyboard interrupts by closing curses
+def play():
+    global a, maze, walls, score, t, pac, g1, g2, g3, g4
     if "--help" in sys.argv or "-h" in sys.argv:
         print("""Usage: sp21 [-OPTIONS]
 A port of the Pacman game for the PDP-11/RT-11.
@@ -589,5 +589,8 @@ A port of the Pacman game for the PDP-11/RT-11.
         if not pac_hall(score):  # if player answered no to ONCE AGAIN ?
             curses.endwin()
             sys.exit(0)
-except KeyboardInterrupt:  # see far, far above
+
+try:  # the entire program is in a try-except statement to handle keyboard interrupts by closing curses
+    play()
+except KeyboardInterrupt:
     curses.endwin()
