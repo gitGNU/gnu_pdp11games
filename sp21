@@ -29,7 +29,6 @@ import shutil  # get terminal size.
 # checking 127 for backspace is required for cygwin compatibility. this might break something though 
 # add more comments
 # the ghost/pacman graphics are currently a hybrid of the original and the russian version
-# score list has weird garbage on 21st line. figure out why
 
 # test on different terminals -- works on xterm, cygwin, screen
 # test on real terminals
@@ -365,6 +364,7 @@ def pac_hall(score):
         name = write_in(a,3,i + 2,score)
         scorelist[i] = str(score) + " " + name + "\n"
         scorein.seek(0)
+        scorein.truncate(0)
         for i in scorelist[:20]:
             scorein.write(i)
         a.addstr(11, 40, "               ") 
