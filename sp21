@@ -29,6 +29,7 @@ import shutil  # get terminal size.
 # checking 127 for backspace is required for cygwin compatibility. this might break something though 
 # add more comments
 # the ghost/pacman graphics are currently a hybrid of the original and the russian version
+# score list has weird garbage on 21st line. figure out why
 
 # test on different terminals -- works on xterm, cygwin, screen
 # test on real terminals
@@ -283,6 +284,55 @@ def show_lives(x):
         a.addstr(line, 79, c)
         line += 1 if line != 9 else 4
 
+def getwch(a):
+    acc = []
+    c = 256 # placeholder value
+    while c > 255: # while c is not a real character
+        c = a.getch()
+        if c == 263 or c == 127:
+            return chr(c)
+    acc.append(c)
+    cnt = 0
+    if (c & 0xE0) == 0xC0:
+        cnt = 1
+    elif (c & 0xF0) == 0xE0:
+        cnt = 2
+    elif (c & 0xF8) == 0xF0:
+        cnt = 3
+    elif (c & 0xFC) == 0xF8:
+        cnt = 4
+    elif (c & 0xFE) == 0xFC:
+        cnt = 5
+    for i in range(cnt):
+        acc.append(a.getch())
+    return bytes(acc).decode("utf-8");  
+
+def write_in(a, x, y, score):
+    acc = ""
+    a.addstr(y, 0, " " * 18)
+    a.addstr(11, 40, "ENTER YOUR NAME")
+    a.addstr(y, 20 - len(str(score)), str(score))
+    a.addstr(y, 0, format(y-1, "02d"))
+    a.addstr(y,x,acc)
+    a.refresh()
+    while True:
+        c = getwch(a)
+        if ord(c) == 263 or ord(c) == 127:
+            if len(acc):
+                acc = acc[0:-1]
+                a.addstr(y,x+len(acc)," ")
+        elif ord(c) == 10:
+            return acc
+        else:
+            acc = acc + c
+        a.addstr(y, 0, " " * 18)
+        a.addstr(11, 40, "ENTER YOUR NAME")
+        a.addstr(y, 20 - len(str(score)), str(score))
+        a.addstr(y, 0, format(y-1, "02d"))
+        a.addstr(y,x,acc)
+        a.refresh()
+    return acc
+
 def pac_hall(score):
     global a
     scorein = os.fdopen(os.open(os.path.expanduser("~/.sp21.txt"), os.O_RDWR | os.O_CREAT, mode=0o640), "r+")  # if there is no file, make one
@@ -312,20 +362,8 @@ def pac_hall(score):
         except:
             pass
         a.keypad(1)
-        name = []
-        char = ""
-        while char != 10: # while you haven't pressed enter:
-            a.addstr(11, 40, "ENTER YOUR NAME")
-            a.addstr(i + 2, 0, " " * 18)
-            a.addstr(i + 2, 20 - len(str(score)), str(score))
-            a.addstr(i + 2, 0, (format(i + 1, "02d") + " " + "".join(name)[:17]))
-            a.refresh()
-            char = a.getch()
-            if (char == 263 or char == 127) and name != []:  # if backspace: (127 is for cygwin compatibility)
-                name.pop()
-            elif char <= 255: # elif it's an actual character:
-                name.append(chr(char))
-        scorelist[i] = str(score) + " " + "".join(name)
+        name = write_in(a,3,i + 2,score)
+        scorelist[i] = str(score) + " " + name + "\n"
         scorein.seek(0)
         for i in scorelist[:20]:
             scorein.write(i)
