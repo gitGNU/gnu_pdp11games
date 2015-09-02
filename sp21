@@ -337,7 +337,7 @@ def pac_hall(score):
     scorein = os.fdopen(os.open(os.path.expanduser("~/.sp21.txt"), os.O_RDWR | os.O_CREAT, mode=0o640), "r+")  # if there is no file, make one
     scorelist = scorein.readlines()[:20]  # scoreboard only shows top 20. may as well be efficient
     minval = min(map(lambda x: int(x.split(" ", 1)[0]), scorelist)) if len(scorelist) else 0  # handle empty scoreboard
-    winning = (len(scorelist) < 20 and score != -1) or score > minval
+    winning = ((len(scorelist) < 20 and score != -1) or score > minval) and "--debug" not in sys.argv  # make this use debug variable latter
     if winning:
         scorelist.append(str(score) + " ")
         scorelist = sorted(
@@ -389,9 +389,11 @@ A port of the Pacman game for the PDP-11/RT-11.
 
   -h, --help     Display this help page.
   -v, --version  Print the current version of the program.
-      --debug    Enable the debug timescale and single-step features.
-                 + and - double and halve the time step length, and
-                 0 toggles single-step mode.""")
+      --debug    Enable the debug features. + and - double
+                 and halve the time step length, 0 toggles
+                 single-step mode, and ? sets your score 
+                 to 2001. Note: Score submission is 
+                 disabled with debug mode on.""")
         sys.exit(0)
     elif "--version" in sys.argv or "-v" in sys.argv:
         print("sp21 1.0")
@@ -466,6 +468,8 @@ A port of the Pacman game for the PDP-11/RT-11.
                         timestep //= 2
                     if n == 48:  # if n is 0:
                         onestep = not onestep
+                    if n == 63:  # if n is ?:
+                        score = 2001
 
                 # wasd --> arrows
                 if n == 119:   # w
@@ -556,10 +560,15 @@ A port of the Pacman game for the PDP-11/RT-11.
             if "@" in pac.lookdown():  # see above but with power pellets
                 maze[pac.y] = maze[pac.y][
                     :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
-                g1.timer = 110  # individual timers because when eaten and respawned, a ghost's timer resets
-                g2.timer = 110
-                g3.timer = 110
-                g4.timer = 110
+                roll = lambda: (random.randint(1,10) != 1) if (score >= 2000) else True
+                if roll():  # after 2000 points, sometimes ghosts don't get affected by power pellets
+                    g1.timer = 110  # individual timers because when eaten and respawned, a ghost's timer resets
+                if roll():
+                    g2.timer = 110
+                if roll():
+                    g3.timer = 110
+                if roll():
+                    g4.timer = 110
                 pac.timer = 110  # this timer handles pacman's speed up
                 g1.gdir = -1  # this lets the ghosts turn around
                 g2.gdir = -1
