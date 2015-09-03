@@ -166,6 +166,8 @@ class Ghost(Pacman):
             gposs.append(2)
         if self.x <= 77 and (self.gdir != 2 and maze[self.y][self.x + 2] not in walls):
             gposs.append(3)
+        if pac.gdir in gposs: # minor preference for going in the direction pacman does
+            gposs.append(pac.gdir)
         if len(gposs) > 0:
             self.gdir = wrand(
                 gposs, self.x, self.y, 2 if not self.alive else 0 if self.timer == 0 else 1)
@@ -560,7 +562,7 @@ A port of the Pacman game for the PDP-11/RT-11.
             if "@" in pac.lookdown():  # see above but with power pellets
                 maze[pac.y] = maze[pac.y][
                     :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
-                roll = lambda: (random.randint(1,10) != 1) if (score >= 2000) else True
+                roll = lambda: (random.randint(1,10) > score//1000) if (score >= 2000) else True
                 if roll():  # after 2000 points, sometimes ghosts don't get affected by power pellets
                     g1.timer = 110  # individual timers because when eaten and respawned, a ghost's timer resets
                 if roll():
