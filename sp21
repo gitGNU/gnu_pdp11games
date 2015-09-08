@@ -285,12 +285,12 @@ def show_lives(x):
         a.addstr(line, 79, c)
         line += 1 if line != 9 else 4
 
-def getwch(a):
+def getwch(a):  # get wide char, for unicode support on scoreboard
     acc = []
-    c = 256 # placeholder value
-    while c > 255: # while c is not a real character
+    c = 256  # placeholder value
+    while c > 255:  # while c is not a real character
         c = a.getch()
-        if c == 263 or c == 127:
+        if c == 263 or c == 127:  # handle enter press
             return chr(c)
     acc.append(c)
     cnt = 0
@@ -471,7 +471,7 @@ A port of the Pacman game for the PDP-11/RT-11.
                     if n == 48:  # if n is 0:
                         onestep = not onestep
                     if n == 63:  # if n is ?:
-                        score = 2001
+                        score += 2001
 
                 # wasd --> arrows
                 if n == 119:   # w
@@ -562,7 +562,7 @@ A port of the Pacman game for the PDP-11/RT-11.
             if "@" in pac.lookdown():  # see above but with power pellets
                 maze[pac.y] = maze[pac.y][
                     :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
-                roll = lambda: (random.randint(1,10) > score//1000) if (score >= 2000) else True
+                roll = lambda: (random.randint(1,100) > score//150) if (score >= 2000) else True
                 if roll():  # after 2000 points, sometimes ghosts don't get affected by power pellets
                     g1.timer = 110  # individual timers because when eaten and respawned, a ghost's timer resets
                 if roll():
@@ -633,7 +633,7 @@ A port of the Pacman game for the PDP-11/RT-11.
                     onestep = False
                 a.nodelay(1)
             curses.napms(timestep)  # sticking the timestep into a variable is for debug and tweaking's sake
-                                    # also: the timestep is a quarter of the time per ghost-move. this is because power-pelleted pacman moves faster
+                                    # also: the timestep is a quarter of the time per ghost-move. this is so that power pelleted pacman can move at 3 steps per character
         a.erase()  # remember the loop which handled ONCE AGAIN ? This code runs once the main game loop is broken out of. if you agree to continue, the loop loops and a new game is started
         if not pac_hall(score):  # if player answered no to ONCE AGAIN ?
             curses.endwin()
