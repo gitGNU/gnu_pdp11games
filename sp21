@@ -21,21 +21,25 @@ import sys
 import os
 import shutil  # get terminal size.
 
-# Bugs / plans:
+# Bugs / plans / differences:
 # No display of the bonus for eaten ghosts
-# How does the original game display 3-digit bonuses?
-# pacman animation freezes for one frame when using tunnel
+# Original game limits bonuses to 90 points.
+# In the original game the bonus value depends on the score only.
+# In the original game Pac-man get trapped in the wrap passage sometimes. We don't need this.
+# Pac-man animation freezes for one frame when using tunnel
 # Object-orient some more of the code, potentially
-# checking 127 for backspace is required for cygwin compatibility. this might break something though 
-# add more comments
-# the ghost/pacman graphics are currently a hybrid of the original and the russian version
-# pellet effect length decreases as score increases. implement this
-# formulas for difficulty curve could be inaccurate
+# checking 127 for backspace is required for cygwin compatibility. this might break something though. 
+# Add more comments.
+# The ghost/pacman graphics are currently a hybrid of the original and the Russian version.
+# Pellet effect length decreases as score increases. Implement this.
+# In the original game the probability of keeping the ghost active seems constant after 2000 points,
+# Formulas for difficulty curve could be inaccurate.
+# Ghosts stay too long in the house.
 
-# test on different terminals -- works on xterm, cygwin, screen
-# test on real terminals
-# test on Windows -- does not work; no curses on Windows
-#     windows has its own system. eventually port this to it
+# Test on different terminals -- works on xterm, cygwin, screen.
+# Test on real terminals.
+# Port to Windows. Windows has no curses but access to Windows console
+# can be done using ctypes interface to the native functions.
 
 mazes = [[
          "+-----------------------------------------------------------------------------+ ",
