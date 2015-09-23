@@ -382,10 +382,10 @@ def pac_hall(score):
     a.nodelay(0)
     while True:
         ch = a.getch()
-        if ch == 121 or ch == 10:  # if you pressed y or enter:
+        if ch == 121 or ch == 89 or ch == 10:  # if you pressed y, Y, or enter:
             a.nodelay(1)
             return True
-        if ch == 110:  # if you pressed n:
+        if ch == 110 or ch == 78:  # if you pressed n or N:
             a.nodelay(1)
             return False
 
