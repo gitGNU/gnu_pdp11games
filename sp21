@@ -23,7 +23,6 @@ import shutil  # get terminal size.
 
 # Bugs / plans / differences:
 # No display of the bonus for eaten ghosts
-# Original game limits bonuses to 90 points.
 # In the original game the bonus value depends on the score only.
 # In the original game Pac-man get trapped in the wrap passage sometimes. We don't need this.
 # Pac-man animation freezes for one frame when using tunnel
@@ -557,7 +556,8 @@ A port of the Pacman game for the PDP-11/RT-11.
                 btime = 400
             if bonus and pac.touching(39, 14):
                 score += bpower
-                bpower += 15
+                if bpower < 90:
+                    bpower += 15
                 btime = -1
                 bonus = False
             if "." in pac.lookdown():  # if there's a dot below me:
