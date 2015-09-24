@@ -21,24 +21,21 @@ import sys
 import os
 import shutil  # get terminal size.
 
+# A clone of SP21.SAV Pac-man rewritten in Python 3 using ncurses.
+#
 # Bugs / plans / differences:
-# No display of the bonus for eaten ghosts
+# No display of the bonus for eaten ghosts.
 # In the original game the bonus value depends on the score only.
 # In the original game Pac-man get trapped in the wrap passage sometimes. We don't need this.
-# Pac-man animation freezes for one frame when using tunnel
-# Object-orient some more of the code, potentially
-# checking 127 for backspace is required for cygwin compatibility. this might break something though. 
-# Add more comments.
+# Pac-man animation freezes for one frame when using tunnel.
+# Object-orient some more of the code, potentially.
 # The ghost/pacman graphics are currently a hybrid of the original and the Russian version.
-# Pellet effect length decreases as score increases. Implement this.
-# In the original game the probability of keeping the ghost active seems constant after 2000 points,
-# Formulas for difficulty curve could be inaccurate.
 # Ghosts stay too long in the house.
 
 # Test on different terminals -- works on xterm, cygwin, screen.
 # Test on real terminals.
 # Port to Windows. Windows has no curses but access to Windows console
-# can be done using ctypes interface to the native functions.
+# can be done using ctypes interface to the native DLLs.
 
 mazes = [[
          "+-----------------------------------------------------------------------------+ ",
@@ -568,16 +565,16 @@ A port of the Pacman game for the PDP-11/RT-11.
             if "@" in pac.lookdown():  # see above but with power pellets
                 maze[pac.y] = maze[pac.y][
                     :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
-                roll = lambda: (random.randint(1,100) > score//150) if (score >= 2000) else True
-                if roll():  # after 2000 points, sometimes ghosts don't get affected by power pellets
-                    g1.timer = 110  # individual timers because when eaten and respawned, a ghost's timer resets
-                if roll():
-                    g2.timer = 110
-                if roll():
-                    g3.timer = 110
-                if roll():
-                    g4.timer = 110
-                pac.timer = 110  # this timer handles pacman's speed up
+                timer = 120 if score < 2500 else 60
+                if score < 2000 or random.random() > 0.14: # after 2000 points, sometimes ghosts don't get affected by power pellets
+                    g1.timer = timer  # individual timers because when eaten and respawned, a ghost's timer resets
+                if score < 2000 or random.random() > 0.14:
+                    g2.timer = timer
+                if score < 2000 or random.random() > 0.14:
+                    g3.timer = timer
+                if score < 2000 or random.random() > 0.14:
+                    g4.timer = timer
+                pac.timer = timer  # this timer handles pacman's speed up
                 g1.gdir = -1  # this lets the ghosts turn around
                 g2.gdir = -1
                 g3.gdir = -1
@@ -649,3 +646,4 @@ try:  # the entire program is in a try-except statement to handle keyboard inter
     play()
 except KeyboardInterrupt:
     curses.endwin()
+
