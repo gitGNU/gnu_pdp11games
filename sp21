@@ -120,6 +120,8 @@ class Pacman:
     def __init__(self, x, y, gdir, timer):
         self.x = x
         self.y = y
+        self.prevx = x
+        self.prevy = y
         self.gdir = gdir
         self.timer = timer
         self.alive = True
@@ -130,7 +132,7 @@ class Pacman:
         return ("<$>", ">$<")[(self.x + self.y) % 2] if self.alive else ("+$+" if t % 2 == 0 else "$+$") 
 
     def touching(self, x, y):
-        return (self.x == x or self.x == x + 1 or self.x == x - 1) and self.y == y
+        return self.x == x and self.y == y
 
     def lookdown(self):
         global maze
@@ -148,6 +150,12 @@ class Pacman:
         else:
             a.addstr(self.y, self.x - 1, p)
 
+    def move(self, x, y):
+        self.prevx = self.x
+        self.prevy = self.y
+        self.x = x
+        self.y = y 
+        
 
 class Ghost(Pacman):
 
@@ -157,6 +165,8 @@ class Ghost(Pacman):
     def step(self):  #ghost pathfinding algorithm
         gposs = []
         global maze, walls, combo, pac
+        self.prevx = self.x
+        self.prevy = self.y
         if self.x == 39 and self.y == 10:
             self.alive = True
             self.timer = 0
@@ -190,7 +200,7 @@ class Ghost(Pacman):
 
     def ghosttouch(self, target):  # what happens when pacman touches a ghost?
         global score, combo
-        if self.touching(target.x,target.y) and self.alive:
+        if (self.touching(target.x,target.y) or (target.prevx == self.x and  target.prevy == self.y and target.x == self.prevx and target.y == self.prevy) ) and self.alive:
             if self.timer > 0:
                 self.alive = False
                 combo += 20
@@ -565,7 +575,7 @@ A port of the Pacman game for the PDP-11/RT-11.
                     :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]  # there is no longer a dot below me
                 dots += 1
                 score += 1
-            if "@" in pac.lookdown():  # see above but with power pellets
+            elif "@" in pac.lookdown():  # see above but with power pellets
                 maze[pac.y] = maze[pac.y][
                     :pac.x - 1] + "   " + maze[pac.y][pac.x + 2:]
                 timer = 120 if score < 2500 else 60
@@ -585,11 +595,25 @@ A port of the Pacman game for the PDP-11/RT-11.
                 combo = 0  # eating a power pellet resets your ghosts-eaten combo point counter thing
                 score += 5
 
+            if not g1.alive:
+                g1.draw()
+            if not g2.alive:
+                g2.draw()
+            if not g3.alive:
+                g3.draw()
+            if not g4.alive:
+                g4.draw()
+
+            if g1.alive:
+                g1.draw()
+            if g2.alive:
+                g2.draw()
+            if g3.alive:
+                g3.draw()
+            if g4.alive:
+                g4.draw()
+
             pac.draw()
-            g1.draw()
-            g2.draw()
-            g3.draw()
-            g4.draw()
 
             if (t % 3 == 0) if pac.timer > 0 else (t % 4 == 0):  # pacman is a bit faster when he has a power pellet
                 if (pac.gdir == 0 and q == 1) or (pac.gdir == 1 and q == 0) or (pac.gdir == 2 and q == 3) or (pac.gdir == 3 and q == 2):
@@ -608,28 +632,25 @@ A port of the Pacman game for the PDP-11/RT-11.
                     q = None
 
                 if pac.x == 79 and pac.gdir == 3:
-                    pac.x = -1  # see the corresponding code in the ghost pathing function
-                    pac.y = 12
+                    pac.move(-1, 12)  # see the corresponding code in the ghost pathing function
                 if pac.x == 0 and pac.gdir == 2:
-                    pac.x = 80
-                    pac.y = 11
-
+                    pac.move(80, 11)
                 if pac.gdir == 0 and maze[pac.y + 1][pac.x] not in walls and maze[pac.y + 1][pac.x - 1] not in walls and maze[pac.y + 1][pac.x + 1] not in walls:
-                    pac.y += 1  # actually moving pacman
+                    pac.move(pac.x, pac.y + 1)  # actually moving pacman
                 elif pac.gdir == 1 and maze[pac.y - 1][pac.x] not in walls and maze[pac.y - 1][pac.x - 1] not in walls and maze[pac.y - 1][pac.x + 1] not in walls:
-                    pac.y -= 1
+                    pac.move(pac.x, pac.y - 1)
                 elif pac.gdir == 2 and (pac.x < 2 or maze[pac.y][pac.x - 2] not in walls):
-                    pac.x -= 1
+                    pac.move(pac.x - 1, pac.y)
                 elif pac.gdir == 3 and (pac.x > 77 or maze[pac.y][pac.x + 2] not in walls):
-                    pac.x += 1
+                    pac.move(pac.x + 1, pac.y)
 
             if pac.timer > 0 and t % 4 == 0:
                 pac.timer -= 1
 
             if debug:
                 a.addstr(25, 0, str((pac.x, pac.y)))  # i am not good with coordinates
-                a.addstr(26,0,str(q))
-            a.addstr(23,79,"")  # put the cursor in the corner, just in case curs_set failed
+                a.addstr(26, 0, str(q))
+            a.addstr(23, 79, "")  # put the cursor in the corner, just in case curs_set failed
             a.refresh()
 
             if onestep:
