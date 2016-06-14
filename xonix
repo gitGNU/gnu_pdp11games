@@ -137,17 +137,28 @@ class Ball:
         self.prevy = y
         self.dx = dx
         self.dy = dy
-    
+       
     def step(self):
         self.prevx = self.x
         self.prevy = self.y
-        if self.dx > 0 and field[self.y][self.x+1] == "▉" or self.dx < 0 and field[self.y][self.x-1] == "▉":
-            self.dx *= -1
-        if self.dy > 0 and field[self.y+1][self.x] == "▉" or self.dy < 0 and field[self.y-1][self.x] == "▉":  
-            self.dy *= -1
+        x = self.x + self.dx
+        y = self.y + self.dy
+        if field[y][x] != ' ':
+            if field[self.y][x] != ' ':
+                if field[y][self.x] != ' ':
+                    self.dx *= -1
+                    self.dy *= -1
+                else:
+                    self.dx *= -1
+            else:
+                if field[y][self.x] != ' ':
+                    self.dy *= -1
+                else:
+                    self.dx *= -1
+                    self.dy *= -1
         self.x += self.dx
         self.y += self.dy
-   
+
     def draw(self):
         scr.addstr(self.prevy, self.prevx, " ")
         scr.addstr(self.y, self.x, "o")
@@ -164,12 +175,29 @@ class Ghost:
     def step(self):
         self.prevx = self.x
         self.prevy = self.y
-        if self.dx > 0 and (self.x >= 79 or field[self.y][self.x+1] == " ") or self.dx < 0 and (self.x <= 0 or field[self.y][self.x-1] == " "):
+        x = self.x + self.dx
+        y = self.y + self.dy
+        if x < 0 or x > 79:
             self.dx *= -1
-        if self.dy > 0 and (self.y >= 22 or field[self.y+1][self.x] == " ") or self.dy < 0 and (self.y <= 0 or field[self.y-1][self.x] == " "):
+            x = self.x + self.dx
+        if y < 0 or y > 22:
             self.dy *= -1
+            y = self.y + self.dy
+        if field[y][x] == ' ':
+            if field[self.y][x] == ' ':
+                if field[y][self.x] == ' ':
+                    self.dx *= -1
+                    self.dy *= -1
+                else:
+                    self.dx *= -1
+            else:
+                if field[y][self.x] == ' ':
+                    self.dy *= -1
+                else:
+                    self.dx *= -1
+                    self.dy *= -1
         self.x += self.dx
-        self.y += self.dy
+        self.y += self.dy   
    
     def draw(self):
         scr.addstr(self.prevy, self.prevx, "▉")
@@ -246,7 +274,6 @@ def play():
             scr.addstr(23, 69, "Time:")
         
             scr.refresh()
-
        
             pac = Pacman(40, 0, 0)
             ghosts = [Ghost(40, 22, 1 ,1)]
@@ -299,19 +326,19 @@ def play():
                     scr.addstr(23, 39, format(game_result, '8'))
                     if game_result >= 1000:
                         game_result = 0
-                        scr.erase()
                         init_field()
                         for i, obj in enumerate(field):
                             scr.addstr(i, 0, "".join(obj))
                         balls += [Ball()]
-             
+                        ghosts = [Ghost(40, 22, 1 ,1)]
+
                 scr.refresh()
                 curses.napms(50)
                 if tick % 20 == 0:
                     time -= 1;
                     if time <= 0:
                         time = 60
-                        ghosts += [Ghost(40, 22, 1 ,1)]
+                        ghosts += [Ghost(random.randint(30, 50), 22, 1 ,1)]
                     scr.addstr(23, 76, format(time,'2'))
                 tick += 1
     curses.endwin()
