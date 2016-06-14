@@ -200,7 +200,8 @@ class Ghost(Pacman):
 
     def ghosttouch(self, target):  # what happens when pacman touches a ghost?
         global score, combo
-        if (self.touching(target.x,target.y) or (target.prevx == self.x and  target.prevy == self.y and target.x == self.prevx and target.y == self.prevy) ) and self.alive:
+        if ((self.x == target.x or (target.prevx == self.x and target.x == self.prevx)) and
+            (self.y == target.y or (target.prevy == self.y and target.y == self.prevy)) and self.alive):
             if self.timer > 0:
                 self.alive = False
                 combo += 20
@@ -405,8 +406,8 @@ A port of the Pacman game for the PDP-11/RT-11.
   -v, --version  Print the current version of the program.
       --debug    Enable the debug features. + and - double
                  and halve the time step length, 0 toggles
-                 single-step mode, and ? sets your score 
-                 to 2001. Note: Score submission is 
+                 single-step mode, and ? bumps your score 
+                 by 2001. Note: Score submission is 
                  disabled with debug mode on.""")
         sys.exit(0)
     elif "--version" in sys.argv or "-v" in sys.argv:
