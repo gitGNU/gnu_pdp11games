@@ -25,8 +25,7 @@ import operator
 # A clone of XONIX.SAV rewritten in Python 3 using ncurses.
 #
 # Bugs / plans / differences:
-# ???
-
+#
 # Test on different terminals -- works on xterm, cygwin, screen.
 # Test on real terminals.
 # Port to Windows. Windows has no curses but access to Windows console
@@ -125,6 +124,13 @@ class Pacman:
         for x, y in self.trail:
             scr.addstr(y, x, "*")
         scr.addstr(self.y, self.x, "@")
+        
+    def back(self):
+        self.x = self.startx
+        self.y = self.starty
+        self.gdir = 0
+        self.state = 0
+        self.trail = []
            
 class Ghost:
     def __init__(self, x, y, dx, dy):
@@ -158,7 +164,7 @@ class Ghost:
         self.y += self.dy   
    
     def draw(self):
-        scr.addstr(self.prevy, self.prevx, "▉")
+        scr.addstr(self.prevy, self.prevx, field[self.prevy][self.prevx])
         scr.addstr(self.y, self.x, " ")
 
 class Ball(Ghost):
@@ -239,6 +245,7 @@ def play():
         init_field()
         attempts = 10
         balls = [Ball(), Ball(), Ball()]
+        pac = Pacman(40, 0, 0)
 
         while attempts:
             scr.erase()
@@ -251,7 +258,7 @@ def play():
         
             scr.refresh()
        
-            pac = Pacman(40, 0, 0)
+            pac.back()
             ghosts = [Ghost(40, 22, 1 ,1)]
             scr.nodelay(1)
             tick = 0 
@@ -281,10 +288,13 @@ def play():
                         obj.step()
                         obj.draw() 
                     if pac.x == obj.x and pac.y == obj.y:
+                        scr.addstr(obj.y,obj.x, "X")
+                        field[obj.y][obj.x] = "X"
                         eaten = True
                         break
                 if eaten:
                     attempts -= 1
+                    curses.napms(700)
                     break
                 if pac.state == 0 and len(pac.trail):
                     for obj in pac.trail:
@@ -307,6 +317,7 @@ def play():
                             scr.addstr(i, 0, "".join(obj))
                         balls += [Ball()]
                         ghosts = [Ghost(40, 22, 1 ,1)]
+                        pac = Pacman(40, 0, 0)
 
                 scr.refresh()
                 curses.napms(50)
