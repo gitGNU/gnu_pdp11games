@@ -195,8 +195,6 @@ class Ghost(Pacman):
             self.timer -= 1
             if self.timer == 0:
                 self.gdir = -1
-        else:
-            combo = 0
 
     def ghosttouch(self, target):  # what happens when pacman touches a ghost?
         global score, combo
@@ -397,7 +395,7 @@ def pac_hall(score):
             return False
 
 def play():
-    global a, maze, walls, score, t, pac, g1, g2, g3, g4
+    global a, maze, walls, score, combo, t, pac, g1, g2, g3, g4
     if "--help" in sys.argv or "-h" in sys.argv:
         print("""Usage: sp21 [-OPTIONS]
 A port of the Pacman game for the PDP-11/RT-11.
